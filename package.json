@@ -1,0 +1,28 @@
+{
+  "name": "colorspace-stream",
+  "version": "0.1.0",
+  "description": "Streaming colour space conversions (RGB, XYZ, Lab, HSL) for pixel buffers of any size",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "color",
+    "colour",
+    "colorspace",
+    "rgb",
+    "lab",
+    "xyz",
+    "hsl",
+    "stream"
+  ],
+  "license": "MIT",
+  "author": "raanderson6",
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
