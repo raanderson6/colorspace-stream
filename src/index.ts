@@ -6,6 +6,8 @@ import {
   lab8Writer,
   rgb8Reader,
   rgb8Writer,
+  rgb16Reader,
+  rgb16Writer,
 } from './stream';
 
 export * from './conversions';
@@ -24,4 +26,14 @@ export function createRgbToHslStream(options?: TransformOptions): ColorSpaceTran
 /** Passes RGB through unchanged; mainly useful for testing the chunking logic itself. */
 export function createRgbIdentityStream(options?: TransformOptions): ColorSpaceTransform {
   return new ColorSpaceTransform(rgb8Reader, rgb8Writer, (rgb) => rgb, options);
+}
+
+/** Packed 16-bit-per-channel RGB in, packed 8-bit Lab out. */
+export function createRgb16ToLabStream(options?: TransformOptions): ColorSpaceTransform {
+  return new ColorSpaceTransform(rgb16Reader, lab8Writer, rgbToLab, options);
+}
+
+/** Packed 16-bit-per-channel RGB in and out, mainly useful for testing the chunking logic itself. */
+export function createRgb16IdentityStream(options?: TransformOptions): ColorSpaceTransform {
+  return new ColorSpaceTransform(rgb16Reader, rgb16Writer, (rgb) => rgb, options);
 }

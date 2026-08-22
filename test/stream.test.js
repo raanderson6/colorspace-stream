@@ -2,7 +2,11 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createRgbIdentityStream, createRgbToHslStream } = require('../dist/index.js');
+const {
+  createRgbIdentityStream,
+  createRgbToHslStream,
+  createRgb16IdentityStream,
+} = require('../dist/index.js');
 
 // Collects everything the stream emits and resolves once it ends, or
 // rejects if the stream errors - lets each test drive a stream with an
@@ -65,5 +69,29 @@ test('a trailing partial pixel raises a flush error instead of being dropped', a
   await assert.rejects(
     feed(createRgbIdentityStream(), [truncated]),
     /trailing 2 byte/,
+  );
+});
+
+// Two pixels of 16-bit-per-channel RGB (6 bytes each), big-endian, with
+// values chosen so no byte is 0 or 255 - a straddling split anywhere in
+// here would corrupt a real channel value if the leftover handling were
+// wrong for a bytesPerPixel other than 3.
+const TWO_PIXELS_16BIT = Buffer.from([
+  0x01, 0x23, 0x45, 0x67, 0x89, 0xab,
+  0xcd, 0xef, 0x10, 0x32, 0x54, 0x76,
+]);
+
+test('16-bit identity stream output does not depend on chunk boundaries', async () => {
+  for (let size = 1; size <= TWO_PIXELS_16BIT.length; size++) {
+    const out = await feed(createRgb16IdentityStream(), splitEvery(TWO_PIXELS_16BIT, size));
+    assert.deepEqual(out, TWO_PIXELS_16BIT, `chunk size ${size}`);
+  }
+});
+
+test('16-bit stream raises a flush error for a trailing partial pixel', async () => {
+  const truncated = TWO_PIXELS_16BIT.subarray(0, 6 + 4); // one full pixel plus 4 stray bytes
+  await assert.rejects(
+    feed(createRgb16IdentityStream(), [truncated]),
+    /trailing 4 byte/,
   );
 });

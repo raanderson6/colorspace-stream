@@ -39,6 +39,34 @@ export const rgb8Writer: PixelWriter = {
   },
 };
 
+function clampUint16(v: number): number {
+  const rounded = Math.round(v);
+  return rounded < 0 ? 0 : rounded > 65535 ? 65535 : rounded;
+}
+
+// Big-endian 16-bit-per-channel RGB, the layout used by 16-bit PNG and TIFF
+// samples. Six bytes per pixel instead of rgb8's three, so the streaming
+// transform's leftover buffer can hold up to 5 straddling bytes here.
+export const rgb16Reader: PixelReader = {
+  bytesPerPixel: 6,
+  read(buf, offset) {
+    return [
+      buf.readUInt16BE(offset) / 65535,
+      buf.readUInt16BE(offset + 2) / 65535,
+      buf.readUInt16BE(offset + 4) / 65535,
+    ];
+  },
+};
+
+export const rgb16Writer: PixelWriter = {
+  bytesPerPixel: 6,
+  write([r, g, b], out, offset) {
+    out.writeUInt16BE(clampUint16(r * 65535), offset);
+    out.writeUInt16BE(clampUint16(g * 65535), offset + 2);
+    out.writeUInt16BE(clampUint16(b * 65535), offset + 4);
+  },
+};
+
 // Lab has no natural 8-bit range, so L is scaled from [0, 100] and a/b are
 // shifted from roughly [-128, 127] into [0, 255]. Round-tripping through
 // this codec loses precision; use the plain Lab functions directly if you
