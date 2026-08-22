@@ -81,6 +81,15 @@ channels, an alpha channel, YCbCr, and so on).
   `createRgbToHslStream`, `createRgbIdentityStream` convenience
   factories
 
+## Testing
+
+Tests build the library and then run against `dist/` with Node's built-in
+test runner - no test framework dependency:
+
+```sh
+npm test
+```
+
 ## License
 
 MIT, see `LICENSE`.
