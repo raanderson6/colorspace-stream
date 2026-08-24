@@ -6,6 +6,9 @@ const {
   createRgbIdentityStream,
   createRgbToHslStream,
   createRgb16IdentityStream,
+  createRgb32IdentityStream,
+  createRgb32ToLabStream,
+  rgbToLab,
 } = require('../dist/index.js');
 
 // Collects everything the stream emits and resolves once it ends, or
@@ -94,4 +97,50 @@ test('16-bit stream raises a flush error for a trailing partial pixel', async ()
     feed(createRgb16IdentityStream(), [truncated]),
     /trailing 4 byte/,
   );
+});
+
+// Two pixels of float32-per-channel RGB (12 bytes each), big-endian, with
+// values that aren't round in binary so a straddling split anywhere would
+// corrupt a real channel value if the leftover handling were wrong for a
+// bytesPerPixel this large.
+const TWO_PIXELS_32BIT = (() => {
+  const buf = Buffer.alloc(24);
+  const values = [0.125, 0.333, 0.9, 0.001, 0.6, 0.72];
+  values.forEach((v, i) => buf.writeFloatBE(v, i * 4));
+  return buf;
+})();
+
+test('32-bit identity stream output does not depend on chunk boundaries', async () => {
+  for (let size = 1; size <= TWO_PIXELS_32BIT.length; size++) {
+    const out = await feed(createRgb32IdentityStream(), splitEvery(TWO_PIXELS_32BIT, size));
+    assert.deepEqual(out, TWO_PIXELS_32BIT, `chunk size ${size}`);
+  }
+});
+
+test('32-bit stream raises a flush error for a trailing partial pixel', async () => {
+  const truncated = TWO_PIXELS_32BIT.subarray(0, 12 + 5); // one full pixel plus 5 stray bytes
+  await assert.rejects(
+    feed(createRgb32IdentityStream(), [truncated]),
+    /trailing 5 byte/,
+  );
+});
+
+test('32-bit RGB to Lab stream round-trips through float32 with no precision loss', async () => {
+  const out = await feed(createRgb32ToLabStream(), [TWO_PIXELS_32BIT]);
+  for (let pixel = 0; pixel < 2; pixel++) {
+    const inOffset = pixel * 12;
+    const rgb = [
+      TWO_PIXELS_32BIT.readFloatBE(inOffset),
+      TWO_PIXELS_32BIT.readFloatBE(inOffset + 4),
+      TWO_PIXELS_32BIT.readFloatBE(inOffset + 8),
+    ];
+    const expected = rgbToLab(rgb);
+    const outOffset = pixel * 12;
+    const actual = [out.readFloatBE(outOffset), out.readFloatBE(outOffset + 4), out.readFloatBE(outOffset + 8)];
+    for (let i = 0; i < 3; i++) {
+      // float32 precision, not float64 - the stream itself is exact, but
+      // reading the packed bytes back loses the last few bits either way.
+      assert.ok(Math.abs(actual[i] - expected[i]) < 1e-4, `pixel ${pixel} channel ${i}`);
+    }
+  }
 });

@@ -69,14 +69,47 @@ export const rgb16Writer: PixelWriter = {
 
 // Lab has no natural 8-bit range, so L is scaled from [0, 100] and a/b are
 // shifted from roughly [-128, 127] into [0, 255]. Round-tripping through
-// this codec loses precision; use the plain Lab functions directly if you
-// need full fidelity and can afford floats in memory.
+// this codec loses precision; use lab32Writer, or the plain Lab functions
+// directly, if you need full fidelity.
 export const lab8Writer: PixelWriter = {
   bytesPerPixel: 3,
   write([l, a, b], out, offset) {
     out[offset] = clampByte((l / 100) * 255);
     out[offset + 1] = clampByte(a + 128);
     out[offset + 2] = clampByte(b + 128);
+  },
+};
+
+// Big-endian IEEE 754 float32 per channel, unscaled. Twelve bytes per
+// pixel, so the streaming transform's leftover buffer can hold up to 11
+// straddling bytes here. Unlike the fixed-width integer codecs above,
+// values aren't clamped on write - floats don't wrap or corrupt neighbouring
+// channels the way an out-of-range byte would, so out-of-gamut or HDR data
+// round-trips as-is.
+export const rgb32Reader: PixelReader = {
+  bytesPerPixel: 12,
+  read(buf, offset) {
+    return [buf.readFloatBE(offset), buf.readFloatBE(offset + 4), buf.readFloatBE(offset + 8)];
+  },
+};
+
+export const rgb32Writer: PixelWriter = {
+  bytesPerPixel: 12,
+  write([r, g, b], out, offset) {
+    out.writeFloatBE(r, offset);
+    out.writeFloatBE(g, offset + 4);
+    out.writeFloatBE(b, offset + 8);
+  },
+};
+
+// Full-precision Lab, no byte-range scaling - pairs with rgb32Reader for a
+// lossless RGB -> Lab stream, unlike lab8Writer.
+export const lab32Writer: PixelWriter = {
+  bytesPerPixel: 12,
+  write([l, a, b], out, offset) {
+    out.writeFloatBE(l, offset);
+    out.writeFloatBE(a, offset + 4);
+    out.writeFloatBE(b, offset + 8);
   },
 };
 

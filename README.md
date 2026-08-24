@@ -66,8 +66,8 @@ const toHsl = new ColorSpaceTransform(rgb8Reader, hsl8Writer, rgbToHsl);
 ```
 
 This is exactly how `createRgbToHslStream` is implemented; use it as a
-template if you need a codec this library doesn't ship yet (float32
-channels, an alpha channel, YCbCr, and so on).
+template if you need a codec this library doesn't ship yet (an alpha
+channel, YCbCr, and so on).
 
 ## What's here now
 
@@ -83,6 +83,9 @@ channels, an alpha channel, YCbCr, and so on).
 - `rgb16Reader`, `rgb16Writer` - big-endian 16-bit-per-channel RGB (the
   layout used by 16-bit PNG and TIFF samples), plus
   `createRgb16ToLabStream` and `createRgb16IdentityStream`
+- `rgb32Reader`, `rgb32Writer`, `lab32Writer` - big-endian float32-per-channel
+  codecs, unscaled and unclamped, for lossless round trips, plus
+  `createRgb32ToLabStream` and `createRgb32IdentityStream`
 
 ## Testing
 
