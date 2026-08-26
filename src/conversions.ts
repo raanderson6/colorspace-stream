@@ -132,3 +132,23 @@ export function hslToRgb([h, s, l]: Triple): Triple {
 
   return [hueToChannel(p, q, h + 1 / 3), hueToChannel(p, q, h), hueToChannel(p, q, h - 1 / 3)];
 }
+
+// ITU-R BT.601, full range (the JPEG/JFIF convention, not the studio-swing
+// broadcast one). Cb/Cr are shifted by +0.5 so all three channels land in
+// [0, 1] like the rest of this library instead of the conventional [-0.5, 0.5].
+
+/** sRGB channels in [0, 1] to YCbCr (BT.601, full range), all three channels in [0, 1]. */
+export function rgbToYCbCr([r, g, b]: Triple): Triple {
+  return [
+    0.299 * r + 0.587 * g + 0.114 * b,
+    -0.168736 * r - 0.331264 * g + 0.5 * b + 0.5,
+    0.5 * r - 0.418688 * g - 0.081312 * b + 0.5,
+  ];
+}
+
+/** YCbCr (BT.601, full range, all channels in [0, 1]) back to sRGB channels in [0, 1]. */
+export function yCbCrToRgb([y, cb, cr]: Triple): Triple {
+  const u = cb - 0.5;
+  const v = cr - 0.5;
+  return [y + 1.402 * v, y - 0.344136 * u - 0.714136 * v, y + 1.772 * u];
+}

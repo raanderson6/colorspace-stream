@@ -11,6 +11,8 @@ const {
   labToRgb,
   rgbToHsl,
   hslToRgb,
+  rgbToYCbCr,
+  yCbCrToRgb,
 } = require('../dist/index.js');
 
 function assertTripleClose(actual, expected, epsilon, message) {
@@ -78,4 +80,23 @@ test('rgbToHsl matches known values for mid gray', () => {
   assert.equal(h, 0);
   assert.equal(s, 0);
   assert.ok(Math.abs(l - 0.5) < 1e-9);
+});
+
+test('rgbToYCbCr/yCbCrToRgb round trip', () => {
+  // The matrix used here is constructed as its own algebraic inverse, unlike
+  // the published RGB/XYZ constants above, so the round trip should be tight.
+  for (const color of SAMPLE_COLORS) {
+    const roundTripped = yCbCrToRgb(rgbToYCbCr(color));
+    assertTripleClose(roundTripped, color, 1e-9, `ycbcr round trip for ${color}`);
+  }
+});
+
+test('rgbToYCbCr matches known values for white and black', () => {
+  // Neutral colours carry no chroma, so Cb and Cr sit exactly at the 0.5
+  // midpoint regardless of luma.
+  const white = rgbToYCbCr([1, 1, 1]);
+  assertTripleClose(white, [1, 0.5, 0.5], 1e-9, 'ycbcr for white');
+
+  const black = rgbToYCbCr([0, 0, 0]);
+  assertTripleClose(black, [0, 0.5, 0.5], 1e-9, 'ycbcr for black');
 });

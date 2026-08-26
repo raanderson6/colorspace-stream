@@ -1,8 +1,8 @@
 # colorspace-stream
 
-Convert pixel data between colour spaces (RGB, XYZ, CIE L\*a\*b\*, HSL)
-without ever holding the whole image, video frame, or scan buffer in
-memory at once.
+Convert pixel data between colour spaces (RGB, XYZ, CIE L\*a\*b\*, HSL,
+YCbCr) without ever holding the whole image, video frame, or scan
+buffer in memory at once.
 
 ## Why
 
@@ -75,11 +75,12 @@ channel, YCbCr, and so on).
 - `rgbToXyz` / `xyzToRgb` - linear RGB <-> CIE XYZ (D65)
 - `xyzToLab` / `labToXyz`, and the `rgbToLab` / `labToRgb` shortcuts
 - `rgbToHsl` / `hslToRgb`
+- `rgbToYCbCr` / `yCbCrToRgb` - BT.601, full range (the JPEG convention)
 - `ColorSpaceTransform`, a chunk-boundary-safe streaming converter
-- `rgb8Reader`, `rgb8Writer`, `lab8Writer`, `hsl8Writer` - 8-bit packed
-  codecs for the stream, plus `createRgbToLabStream`,
-  `createRgbToHslStream`, `createRgbIdentityStream` convenience
-  factories
+- `rgb8Reader`, `rgb8Writer`, `lab8Writer`, `hsl8Writer`, `ycbcr8Writer` -
+  8-bit packed codecs for the stream, plus `createRgbToLabStream`,
+  `createRgbToHslStream`, `createRgbToYCbCrStream`,
+  `createRgbIdentityStream` convenience factories
 - `rgb16Reader`, `rgb16Writer` - big-endian 16-bit-per-channel RGB (the
   layout used by 16-bit PNG and TIFF samples), plus
   `createRgb16ToLabStream` and `createRgb16IdentityStream`

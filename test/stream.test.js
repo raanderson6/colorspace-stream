@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const {
   createRgbIdentityStream,
   createRgbToHslStream,
+  createRgbToYCbCrStream,
   createRgb16IdentityStream,
   createRgb32IdentityStream,
   createRgb32ToLabStream,
@@ -51,6 +52,17 @@ test('converting stream output does not depend on chunk boundaries', async () =>
   const whole = await feed(createRgbToHslStream(), [pixels]);
   for (let size = 1; size < pixels.length; size++) {
     const chunked = await feed(createRgbToHslStream(), splitEvery(pixels, size));
+    assert.deepEqual(chunked, whole, `chunk size ${size}`);
+  }
+});
+
+test('YCbCr stream output does not depend on chunk boundaries', async () => {
+  const pixels = Buffer.from([
+    10, 20, 30, 200, 100, 50, 0, 0, 0, 255, 255, 255, 128, 64, 32,
+  ]);
+  const whole = await feed(createRgbToYCbCrStream(), [pixels]);
+  for (let size = 1; size < pixels.length; size++) {
+    const chunked = await feed(createRgbToYCbCrStream(), splitEvery(pixels, size));
     assert.deepEqual(chunked, whole, `chunk size ${size}`);
   }
 });

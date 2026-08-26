@@ -1,5 +1,5 @@
 import { TransformOptions } from 'node:stream';
-import { rgbToHsl, rgbToLab } from './conversions';
+import { rgbToHsl, rgbToLab, rgbToYCbCr } from './conversions';
 import {
   ColorSpaceTransform,
   hsl8Writer,
@@ -11,6 +11,7 @@ import {
   rgb16Writer,
   rgb32Reader,
   rgb32Writer,
+  ycbcr8Writer,
 } from './stream';
 
 export * from './conversions';
@@ -29,6 +30,11 @@ export function createRgbToHslStream(options?: TransformOptions): ColorSpaceTran
 /** Passes RGB through unchanged; mainly useful for testing the chunking logic itself. */
 export function createRgbIdentityStream(options?: TransformOptions): ColorSpaceTransform {
   return new ColorSpaceTransform(rgb8Reader, rgb8Writer, (rgb) => rgb, options);
+}
+
+/** Packed 8-bit RGB in, packed 8-bit YCbCr out (BT.601, full range). */
+export function createRgbToYCbCrStream(options?: TransformOptions): ColorSpaceTransform {
+  return new ColorSpaceTransform(rgb8Reader, ycbcr8Writer, rgbToYCbCr, options);
 }
 
 /** Packed 16-bit-per-channel RGB in, packed 8-bit Lab out. */

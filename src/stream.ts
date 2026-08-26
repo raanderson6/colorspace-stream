@@ -122,6 +122,15 @@ export const hsl8Writer: PixelWriter = {
   },
 };
 
+export const ycbcr8Writer: PixelWriter = {
+  bytesPerPixel: 3,
+  write([y, cb, cr], out, offset) {
+    out[offset] = clampByte(y * 255);
+    out[offset + 1] = clampByte(cb * 255);
+    out[offset + 2] = clampByte(cr * 255);
+  },
+};
+
 /**
  * A Transform stream that converts packed pixel data from one colour space
  * to another, one pixel at a time.
