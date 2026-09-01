@@ -1,21 +1,24 @@
 import { Transform, TransformCallback, TransformOptions } from 'node:stream';
-import { Triple } from './conversions';
+import { Channels, Triple } from './conversions';
 
 /**
  * Reads a fixed number of bytes per pixel from a buffer at a given offset
- * and produces normalised channel values (typically in [0, 1]).
+ * and produces normalised channel values (typically in [0, 1]). The channel
+ * count is part of the type (Triple for RGB/Lab/HSL/YCbCr, a 4-tuple for
+ * CMYK, and so on) so a reader and its paired convert function always agree
+ * on how many channels a pixel has.
  */
-export interface PixelReader {
+export interface PixelReader<C extends Channels = Triple> {
   bytesPerPixel: number;
-  read(buf: Buffer, offset: number): Triple;
+  read(buf: Buffer, offset: number): C;
 }
 
 /**
  * Writes normalised channel values back out as a fixed number of bytes.
  */
-export interface PixelWriter {
+export interface PixelWriter<C extends Channels = Triple> {
   bytesPerPixel: number;
-  write(values: Triple, out: Buffer, offset: number): void;
+  write(values: C, out: Buffer, offset: number): void;
 }
 
 function clampByte(v: number): number {
@@ -141,14 +144,18 @@ export const ycbcr8Writer: PixelWriter = {
  * most (bytesPerPixel - 1) bytes are ever held outside of the chunk
  * currently being processed. The whole input is never buffered in memory,
  * no matter how large the source is.
+ *
+ * Reader and writer channel counts are independent type parameters, not
+ * both tied to the same tuple - a reader can decode a 3-channel RGB pixel
+ * and hand it to a convert function that writes out a 4-channel CMYK one.
  */
-export class ColorSpaceTransform extends Transform {
+export class ColorSpaceTransform<In extends Channels = Triple, Out extends Channels = Triple> extends Transform {
   private leftover: Buffer = Buffer.alloc(0);
 
   constructor(
-    private readonly reader: PixelReader,
-    private readonly writer: PixelWriter,
-    private readonly convert: (rgb: Triple) => Triple,
+    private readonly reader: PixelReader<In>,
+    private readonly writer: PixelWriter<Out>,
+    private readonly convert: (input: In) => Out,
     options?: TransformOptions,
   ) {
     super(options);

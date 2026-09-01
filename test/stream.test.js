@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
+  ColorSpaceTransform,
   createRgbIdentityStream,
   createRgbToHslStream,
   createRgbToYCbCrStream,
@@ -135,6 +136,36 @@ test('32-bit stream raises a flush error for a trailing partial pixel', async ()
     feed(createRgb32IdentityStream(), [truncated]),
     /trailing 5 byte/,
   );
+});
+
+// A 4-channel 8-bit codec, one byte per channel, standing in for something
+// like CMYK - proves ColorSpaceTransform's chunking logic isn't secretly
+// tied to 3-channel pixels now that reader/writer are generic over the
+// channel count.
+const fourChannel8Reader = {
+  bytesPerPixel: 4,
+  read(buf, offset) {
+    return [buf[offset] / 255, buf[offset + 1] / 255, buf[offset + 2] / 255, buf[offset + 3] / 255];
+  },
+};
+
+const fourChannel8Writer = {
+  bytesPerPixel: 4,
+  write([a, b, c, d], out, offset) {
+    out[offset] = Math.round(a * 255);
+    out[offset + 1] = Math.round(b * 255);
+    out[offset + 2] = Math.round(c * 255);
+    out[offset + 3] = Math.round(d * 255);
+  },
+};
+
+test('a 4-channel codec round-trips correctly regardless of chunk boundaries', async () => {
+  const pixels = Buffer.from([1, 2, 3, 4, 250, 200, 150, 100, 0, 0, 0, 0, 10, 20, 30, 40]);
+  for (let size = 1; size <= pixels.length; size++) {
+    const stream = new ColorSpaceTransform(fourChannel8Reader, fourChannel8Writer, (channels) => channels);
+    const out = await feed(stream, splitEvery(pixels, size));
+    assert.deepEqual(out, pixels, `chunk size ${size}`);
+  }
 });
 
 test('32-bit RGB to Lab stream round-trips through float32 with no precision loss', async () => {

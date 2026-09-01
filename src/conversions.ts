@@ -5,6 +5,11 @@
 
 export type Triple = [number, number, number];
 
+// The bound used by PixelReader/PixelWriter/ColorSpaceTransform so they
+// aren't locked to 3-channel pixels - a CMYK codec can hand back a 4-tuple,
+// an alpha-aware one a 4-tuple with the alpha last, and so on.
+export type Channels = readonly number[];
+
 // D65 reference white, matches the sRGB working space used below.
 const XN = 0.95047;
 const YN = 1.0;
