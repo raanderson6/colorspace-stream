@@ -1,6 +1,8 @@
 import { TransformOptions } from 'node:stream';
-import { rgbToHsl, rgbToLab, rgbToYCbCr } from './conversions';
+import { cmykToRgb, Quad, rgbToCmyk, rgbToHsl, rgbToLab, rgbToYCbCr, Triple } from './conversions';
 import {
+  cmyk8Reader,
+  cmyk8Writer,
   ColorSpaceTransform,
   hsl8Writer,
   lab8Writer,
@@ -55,4 +57,14 @@ export function createRgb32ToLabStream(options?: TransformOptions): ColorSpaceTr
 /** Packed float32-per-channel RGB in and out, mainly useful for testing the chunking logic itself. */
 export function createRgb32IdentityStream(options?: TransformOptions): ColorSpaceTransform {
   return new ColorSpaceTransform(rgb32Reader, rgb32Writer, (rgb) => rgb, options);
+}
+
+/** Packed 8-bit RGB in, packed 8-bit CMYK out (4 bytes per pixel). */
+export function createRgbToCmykStream(options?: TransformOptions): ColorSpaceTransform<Triple, Quad> {
+  return new ColorSpaceTransform(rgb8Reader, cmyk8Writer, rgbToCmyk, options);
+}
+
+/** Packed 8-bit CMYK in (4 bytes per pixel), packed 8-bit RGB out. */
+export function createCmykToRgbStream(options?: TransformOptions): ColorSpaceTransform<Quad, Triple> {
+  return new ColorSpaceTransform(cmyk8Reader, rgb8Writer, cmykToRgb, options);
 }

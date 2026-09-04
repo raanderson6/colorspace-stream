@@ -1,7 +1,7 @@
 # colorspace-stream
 
 Convert pixel data between colour spaces (RGB, XYZ, CIE L\*a\*b\*, HSL,
-YCbCr) without ever holding the whole image, video frame, or scan
+YCbCr, CMYK) without ever holding the whole image, video frame, or scan
 buffer in memory at once.
 
 ## Why
@@ -76,10 +76,13 @@ channel, YCbCr, and so on).
 - `xyzToLab` / `labToXyz`, and the `rgbToLab` / `labToRgb` shortcuts
 - `rgbToHsl` / `hslToRgb`
 - `rgbToYCbCr` / `yCbCrToRgb` - BT.601, full range (the JPEG convention)
+- `rgbToCmyk` / `cmykToRgb` - naive subtractive conversion (K from the
+  darkest channel), not tied to any particular press or ICC profile
 - `ColorSpaceTransform`, a chunk-boundary-safe streaming converter
-- `rgb8Reader`, `rgb8Writer`, `lab8Writer`, `hsl8Writer`, `ycbcr8Writer` -
-  8-bit packed codecs for the stream, plus `createRgbToLabStream`,
-  `createRgbToHslStream`, `createRgbToYCbCrStream`,
+- `rgb8Reader`, `rgb8Writer`, `lab8Writer`, `hsl8Writer`, `ycbcr8Writer`,
+  `cmyk8Reader`, `cmyk8Writer` - 8-bit packed codecs for the stream, plus
+  `createRgbToLabStream`, `createRgbToHslStream`, `createRgbToYCbCrStream`,
+  `createRgbToCmykStream`, `createCmykToRgbStream`,
   `createRgbIdentityStream` convenience factories
 - `rgb16Reader`, `rgb16Writer` - big-endian 16-bit-per-channel RGB (the
   layout used by 16-bit PNG and TIFF samples), plus

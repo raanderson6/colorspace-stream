@@ -1,5 +1,5 @@
 import { Transform, TransformCallback, TransformOptions } from 'node:stream';
-import { Channels, Triple } from './conversions';
+import { Channels, Quad, Triple } from './conversions';
 
 /**
  * Reads a fixed number of bytes per pixel from a buffer at a given offset
@@ -131,6 +131,25 @@ export const ycbcr8Writer: PixelWriter = {
     out[offset] = clampByte(y * 255);
     out[offset + 1] = clampByte(cb * 255);
     out[offset + 2] = clampByte(cr * 255);
+  },
+};
+
+// Four bytes per pixel instead of the 3-channel codecs' three, so the
+// streaming transform's leftover buffer can hold up to 3 straddling bytes.
+export const cmyk8Reader: PixelReader<Quad> = {
+  bytesPerPixel: 4,
+  read(buf, offset) {
+    return [buf[offset]! / 255, buf[offset + 1]! / 255, buf[offset + 2]! / 255, buf[offset + 3]! / 255];
+  },
+};
+
+export const cmyk8Writer: PixelWriter<Quad> = {
+  bytesPerPixel: 4,
+  write([c, m, y, k], out, offset) {
+    out[offset] = clampByte(c * 255);
+    out[offset + 1] = clampByte(m * 255);
+    out[offset + 2] = clampByte(y * 255);
+    out[offset + 3] = clampByte(k * 255);
   },
 };
 

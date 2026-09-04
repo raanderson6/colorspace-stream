@@ -10,6 +10,8 @@ const {
   createRgb16IdentityStream,
   createRgb32IdentityStream,
   createRgb32ToLabStream,
+  createRgbToCmykStream,
+  createCmykToRgbStream,
   rgbToLab,
 } = require('../dist/index.js');
 
@@ -166,6 +168,31 @@ test('a 4-channel codec round-trips correctly regardless of chunk boundaries', a
     const out = await feed(stream, splitEvery(pixels, size));
     assert.deepEqual(out, pixels, `chunk size ${size}`);
   }
+});
+
+test('RGB to CMYK stream output does not depend on chunk boundaries', async () => {
+  const pixels = Buffer.from([10, 20, 30, 200, 100, 50, 0, 0, 0, 255, 255, 255, 128, 64, 32]);
+  const whole = await feed(createRgbToCmykStream(), [pixels]);
+  for (let size = 1; size < pixels.length; size++) {
+    const chunked = await feed(createRgbToCmykStream(), splitEvery(pixels, size));
+    assert.deepEqual(chunked, whole, `chunk size ${size}`);
+  }
+});
+
+test('RGB -> CMYK -> RGB round-trips through the streaming codecs', async () => {
+  // 8-bit CMYK is lossy the same way 8-bit RGB is, so the round trip is
+  // allowed to differ by a rounding step, not required to be exact.
+  const pixels = Buffer.from([10, 20, 30, 200, 100, 50, 0, 0, 0, 255, 255, 255, 128, 64, 32]);
+  const cmyk = await feed(createRgbToCmykStream(), [pixels]);
+  const roundTripped = await feed(createCmykToRgbStream(), [cmyk]);
+  for (let i = 0; i < pixels.length; i++) {
+    assert.ok(Math.abs(roundTripped[i] - pixels[i]) <= 1, `byte ${i}: expected ~${pixels[i]}, got ${roundTripped[i]}`);
+  }
+});
+
+test('CMYK stream raises a flush error for a trailing partial pixel', async () => {
+  const truncated = Buffer.from([1, 2, 3, 4, 5, 6]); // one full pixel (4 bytes) plus 2 stray bytes
+  await assert.rejects(feed(createCmykToRgbStream(), [truncated]), /trailing 2 byte/);
 });
 
 test('32-bit RGB to Lab stream round-trips through float32 with no precision loss', async () => {

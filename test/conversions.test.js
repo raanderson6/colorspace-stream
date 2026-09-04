@@ -13,6 +13,8 @@ const {
   hslToRgb,
   rgbToYCbCr,
   yCbCrToRgb,
+  rgbToCmyk,
+  cmykToRgb,
 } = require('../dist/index.js');
 
 function assertTripleClose(actual, expected, epsilon, message) {
@@ -99,4 +101,30 @@ test('rgbToYCbCr matches known values for white and black', () => {
 
   const black = rgbToYCbCr([0, 0, 0]);
   assertTripleClose(black, [0, 0.5, 0.5], 1e-9, 'ycbcr for black');
+});
+
+function assertQuadClose(actual, expected, epsilon, message) {
+  for (let i = 0; i < 4; i++) {
+    assert.ok(
+      Math.abs(actual[i] - expected[i]) < epsilon,
+      `${message}: channel ${i} expected ~${expected[i]}, got ${actual[i]}`,
+    );
+  }
+}
+
+test('rgbToCmyk/cmykToRgb round trip', () => {
+  for (const color of SAMPLE_COLORS) {
+    const roundTripped = cmykToRgb(rgbToCmyk(color));
+    assertTripleClose(roundTripped, color, 1e-9, `cmyk round trip for ${color}`);
+  }
+});
+
+test('rgbToCmyk matches known values for the primaries and black', () => {
+  assertQuadClose(rgbToCmyk([1, 0, 0]), [0, 1, 1, 0], 1e-9, 'cmyk for red');
+  assertQuadClose(rgbToCmyk([0, 1, 0]), [1, 0, 1, 0], 1e-9, 'cmyk for green');
+  assertQuadClose(rgbToCmyk([0, 0, 1]), [1, 1, 0, 0], 1e-9, 'cmyk for blue');
+  assertQuadClose(rgbToCmyk([1, 1, 1]), [0, 0, 0, 0], 1e-9, 'cmyk for white');
+  // Black has no darkest-channel headroom to derive C/M/Y from, so they're
+  // conventionally pinned to 0 rather than left undefined.
+  assertQuadClose(rgbToCmyk([0, 0, 0]), [0, 0, 0, 1], 1e-9, 'cmyk for black');
 });

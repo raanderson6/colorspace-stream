@@ -5,6 +5,9 @@
 
 export type Triple = [number, number, number];
 
+/** Four normalised channels, e.g. the C/M/Y/K of a CMYK pixel. */
+export type Quad = [number, number, number, number];
+
 // The bound used by PixelReader/PixelWriter/ColorSpaceTransform so they
 // aren't locked to 3-channel pixels - a CMYK codec can hand back a 4-tuple,
 // an alpha-aware one a 4-tuple with the alpha last, and so on.
@@ -156,4 +159,23 @@ export function yCbCrToRgb([y, cb, cr]: Triple): Triple {
   const u = cb - 0.5;
   const v = cr - 0.5;
   return [y + 1.402 * v, y - 0.344136 * u - 0.714136 * v, y + 1.772 * u];
+}
+
+// Naive subtractive-colour conversion (K taken straight from the darkest
+// channel), not an ICC profile - there's no such thing as "the" RGB<->CMYK
+// conversion since real presses each have their own ink/paper response, so
+// this is only meant to round-trip cleanly, not to match a particular printer.
+
+/** sRGB channels in [0, 1] to CMYK, all four channels in [0, 1]. */
+export function rgbToCmyk([r, g, b]: Triple): Quad {
+  const k = 1 - Math.max(r, g, b);
+  if (k >= 1) {
+    return [0, 0, 0, 1];
+  }
+  return [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k];
+}
+
+/** CMYK (all four channels in [0, 1]) back to sRGB channels in [0, 1]. */
+export function cmykToRgb([c, m, y, k]: Quad): Triple {
+  return [(1 - c) * (1 - k), (1 - m) * (1 - k), (1 - y) * (1 - k)];
 }
