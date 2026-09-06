@@ -12,7 +12,10 @@ const {
   createRgb32ToLabStream,
   createRgbToCmykStream,
   createCmykToRgbStream,
+  createRgbaIdentityStream,
+  createRgbaToHslaStream,
   rgbToLab,
+  rgbToHsl,
 } = require('../dist/index.js');
 
 // Collects everything the stream emits and resolves once it ends, or
@@ -193,6 +196,50 @@ test('RGB -> CMYK -> RGB round-trips through the streaming codecs', async () => 
 test('CMYK stream raises a flush error for a trailing partial pixel', async () => {
   const truncated = Buffer.from([1, 2, 3, 4, 5, 6]); // one full pixel (4 bytes) plus 2 stray bytes
   await assert.rejects(feed(createCmykToRgbStream(), [truncated]), /trailing 2 byte/);
+});
+
+// Four pixels of 8-bit RGBA, with alpha values that are neither 0 nor 255
+// so a bug that dropped or zeroed the alpha byte would show up.
+const FOUR_RGBA_PIXELS = Buffer.from([
+  10, 20, 30, 40, 200, 100, 50, 90, 0, 0, 0, 128, 255, 255, 255, 210,
+]);
+
+test('RGBA identity stream output does not depend on chunk boundaries', async () => {
+  for (let size = 1; size <= FOUR_RGBA_PIXELS.length; size++) {
+    const out = await feed(createRgbaIdentityStream(), splitEvery(FOUR_RGBA_PIXELS, size));
+    assert.deepEqual(out, FOUR_RGBA_PIXELS, `chunk size ${size}`);
+  }
+});
+
+test('RGBA stream raises a flush error for a trailing partial pixel', async () => {
+  const truncated = FOUR_RGBA_PIXELS.subarray(0, 4 + 3); // one full pixel plus 3 stray bytes
+  await assert.rejects(feed(createRgbaIdentityStream(), [truncated]), /trailing 3 byte/);
+});
+
+test('RGBA to HSLA stream converts colour channels and passes alpha through unchanged', async () => {
+  const out = await feed(createRgbaToHslaStream(), [FOUR_RGBA_PIXELS]);
+  for (let pixel = 0; pixel < 4; pixel++) {
+    const inOffset = pixel * 4;
+    const outOffset = pixel * 4;
+    const rgb = [
+      FOUR_RGBA_PIXELS[inOffset] / 255,
+      FOUR_RGBA_PIXELS[inOffset + 1] / 255,
+      FOUR_RGBA_PIXELS[inOffset + 2] / 255,
+    ];
+    const [h, s, l] = rgbToHsl(rgb);
+    assert.ok(Math.abs(out[outOffset] - Math.round(h * 255)) <= 1, `pixel ${pixel} h`);
+    assert.ok(Math.abs(out[outOffset + 1] - Math.round(s * 255)) <= 1, `pixel ${pixel} s`);
+    assert.ok(Math.abs(out[outOffset + 2] - Math.round(l * 255)) <= 1, `pixel ${pixel} l`);
+    assert.equal(out[outOffset + 3], FOUR_RGBA_PIXELS[inOffset + 3], `pixel ${pixel} alpha`);
+  }
+});
+
+test('RGBA to HSLA stream output does not depend on chunk boundaries', async () => {
+  const whole = await feed(createRgbaToHslaStream(), [FOUR_RGBA_PIXELS]);
+  for (let size = 1; size < FOUR_RGBA_PIXELS.length; size++) {
+    const chunked = await feed(createRgbaToHslaStream(), splitEvery(FOUR_RGBA_PIXELS, size));
+    assert.deepEqual(chunked, whole, `chunk size ${size}`);
+  }
 });
 
 test('32-bit RGB to Lab stream round-trips through float32 with no precision loss', async () => {

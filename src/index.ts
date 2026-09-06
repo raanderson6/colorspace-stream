@@ -1,10 +1,11 @@
 import { TransformOptions } from 'node:stream';
-import { cmykToRgb, Quad, rgbToCmyk, rgbToHsl, rgbToLab, rgbToYCbCr, Triple } from './conversions';
+import { cmykToRgb, Quad, rgbToCmyk, rgbToHsl, rgbToLab, rgbToYCbCr, Triple, withAlpha } from './conversions';
 import {
   cmyk8Reader,
   cmyk8Writer,
   ColorSpaceTransform,
   hsl8Writer,
+  hsla8Writer,
   lab8Writer,
   lab32Writer,
   rgb8Reader,
@@ -13,6 +14,8 @@ import {
   rgb16Writer,
   rgb32Reader,
   rgb32Writer,
+  rgba8Reader,
+  rgba8Writer,
   ycbcr8Writer,
 } from './stream';
 
@@ -67,4 +70,14 @@ export function createRgbToCmykStream(options?: TransformOptions): ColorSpaceTra
 /** Packed 8-bit CMYK in (4 bytes per pixel), packed 8-bit RGB out. */
 export function createCmykToRgbStream(options?: TransformOptions): ColorSpaceTransform<Quad, Triple> {
   return new ColorSpaceTransform(cmyk8Reader, rgb8Writer, cmykToRgb, options);
+}
+
+/** Packed 8-bit RGBA in and out (4 bytes per pixel), alpha passed through unchanged. */
+export function createRgbaIdentityStream(options?: TransformOptions): ColorSpaceTransform<Quad, Quad> {
+  return new ColorSpaceTransform(rgba8Reader, rgba8Writer, (rgba) => rgba, options);
+}
+
+/** Packed 8-bit RGBA in, packed 8-bit HSL+alpha out - alpha passes through unchanged. */
+export function createRgbaToHslaStream(options?: TransformOptions): ColorSpaceTransform<Quad, Quad> {
+  return new ColorSpaceTransform(rgba8Reader, hsla8Writer, withAlpha(rgbToHsl), options);
 }

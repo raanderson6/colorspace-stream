@@ -154,6 +154,44 @@ export const cmyk8Writer: PixelWriter<Quad> = {
 };
 
 /**
+ * Wraps an 8-bit-per-channel Triple reader with a trailing 8-bit alpha
+ * channel, producing a 4-channel reader - the same relationship rgba8Reader
+ * has to rgb8Reader, generalised so any Triple-based 8-bit codec (HSL,
+ * YCbCr, ...) gets its "-a" equivalent for free instead of a bespoke reader
+ * per format.
+ */
+export function withAlphaReader(reader: PixelReader<Triple>): PixelReader<Quad> {
+  return {
+    bytesPerPixel: reader.bytesPerPixel + 1,
+    read(buf, offset) {
+      const [x, y, z] = reader.read(buf, offset);
+      return [x, y, z, buf[offset + reader.bytesPerPixel]! / 255];
+    },
+  };
+}
+
+/** The writer-side counterpart of withAlphaReader. */
+export function withAlphaWriter(writer: PixelWriter<Triple>): PixelWriter<Quad> {
+  return {
+    bytesPerPixel: writer.bytesPerPixel + 1,
+    write([x, y, z, a], out, offset) {
+      writer.write([x, y, z], out, offset);
+      out[offset + writer.bytesPerPixel] = clampByte(a * 255);
+    },
+  };
+}
+
+// Straight (non-premultiplied) 8-bit RGBA - four bytes per pixel, alpha
+// scaled into [0, 1] the same way the colour channels are.
+export const rgba8Reader: PixelReader<Quad> = withAlphaReader(rgb8Reader);
+export const rgba8Writer: PixelWriter<Quad> = withAlphaWriter(rgb8Writer);
+
+// 8-bit HSL with a trailing alpha byte, for streams that convert colour
+// while carrying transparency through untouched (see withAlpha in
+// conversions.ts, which pairs with this for the conversion side).
+export const hsla8Writer: PixelWriter<Quad> = withAlphaWriter(hsl8Writer);
+
+/**
  * A Transform stream that converts packed pixel data from one colour space
  * to another, one pixel at a time.
  *

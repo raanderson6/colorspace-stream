@@ -15,6 +15,7 @@ const {
   yCbCrToRgb,
   rgbToCmyk,
   cmykToRgb,
+  withAlpha,
 } = require('../dist/index.js');
 
 function assertTripleClose(actual, expected, epsilon, message) {
@@ -127,4 +128,15 @@ test('rgbToCmyk matches known values for the primaries and black', () => {
   // Black has no darkest-channel headroom to derive C/M/Y from, so they're
   // conventionally pinned to 0 rather than left undefined.
   assertQuadClose(rgbToCmyk([0, 0, 0]), [0, 0, 0, 1], 1e-9, 'cmyk for black');
+});
+
+test('withAlpha converts the colour channels and passes the 4th channel through unchanged', () => {
+  const rgbaToHsla = withAlpha(rgbToHsl);
+  for (const color of SAMPLE_COLORS) {
+    for (const alpha of [0, 0.42, 1]) {
+      const [h, s, l, a] = rgbaToHsla([...color, alpha]);
+      assertTripleClose([h, s, l], rgbToHsl(color), 1e-9, `withAlpha colour channels for ${color}`);
+      assert.equal(a, alpha, `withAlpha alpha channel for ${color}`);
+    }
+  }
 });

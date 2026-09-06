@@ -179,3 +179,16 @@ export function rgbToCmyk([r, g, b]: Triple): Quad {
 export function cmykToRgb([c, m, y, k]: Quad): Triple {
   return [(1 - c) * (1 - k), (1 - m) * (1 - k), (1 - y) * (1 - k)];
 }
+
+/**
+ * Lifts a Triple -> Triple colour conversion into a Quad -> Quad one that
+ * carries a 4th channel straight through unchanged. Alpha isn't a colour
+ * component for any conversion in this file, so this covers rgbaToHsla,
+ * rgbaToYCbCra, and so on without writing each one out by hand.
+ */
+export function withAlpha(convert: (input: Triple) => Triple): (input: Quad) => Quad {
+  return ([r, g, b, a]) => {
+    const [x, y, z] = convert([r, g, b]);
+    return [x, y, z, a];
+  };
+}

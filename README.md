@@ -66,8 +66,24 @@ const toHsl = new ColorSpaceTransform(rgb8Reader, hsl8Writer, rgbToHsl);
 ```
 
 This is exactly how `createRgbToHslStream` is implemented; use it as a
-template if you need a codec this library doesn't ship yet (an alpha
-channel, YCbCr, and so on).
+template if you need a codec this library doesn't ship yet.
+
+### Alpha channels
+
+Alpha isn't a colour component for any conversion here, so rather than a
+bespoke `rgbaToHsla` for every colour space, `withAlpha` lifts a plain
+`Triple -> Triple` conversion into a `Quad -> Quad` one that carries a 4th
+channel straight through untouched, and `withAlphaReader` /
+`withAlphaWriter` do the same for a Triple-based 8-bit codec's reader and
+writer:
+
+```ts
+import { createRgbaToHslaStream } from 'colorspace-stream';
+
+createReadStream('frame.rgba')
+  .pipe(createRgbaToHslaStream())
+  .pipe(createWriteStream('frame.hsla'));
+```
 
 ## What's here now
 
@@ -90,6 +106,11 @@ channel, YCbCr, and so on).
 - `rgb32Reader`, `rgb32Writer`, `lab32Writer` - big-endian float32-per-channel
   codecs, unscaled and unclamped, for lossless round trips, plus
   `createRgb32ToLabStream` and `createRgb32IdentityStream`
+- `withAlpha` - lifts a `Triple -> Triple` conversion into an alpha-preserving
+  `Quad -> Quad` one; `withAlphaReader` / `withAlphaWriter` do the same for a
+  Triple-based 8-bit reader/writer pair
+- `rgba8Reader`, `rgba8Writer`, `hsla8Writer` - 8-bit codecs with a trailing
+  alpha byte, plus `createRgbaIdentityStream` and `createRgbaToHslaStream`
 
 ## Testing
 
