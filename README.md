@@ -121,6 +121,22 @@ test runner - no test framework dependency:
 npm test
 ```
 
+## Benchmarking
+
+```sh
+npm run bench
+```
+
+Runs `bench/stream-vs-buffer.js`, which converts the same packed RGB
+buffer two ways - once as a single whole-buffer pass (allocate a
+same-sized output buffer, convert pixel by pixel) and once through
+`createRgbToLabStream()` fed in fixed-size chunks - and prints elapsed
+time plus a peak-memory comparison for each. The streaming side never
+holds more than one chunk and a few leftover bytes at a time; the
+whole-buffer side holds both the full input and full output. Pass a
+pixel count and chunk size to try other sizes, e.g.
+`node bench/stream-vs-buffer.js 20000000 16384`.
+
 ## License
 
 MIT, see `LICENSE`.
