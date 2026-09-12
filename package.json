@@ -2,6 +2,7 @@
   "name": "colorspace-stream",
   "version": "0.1.0",
   "description": "Streaming colour space conversions (RGB, XYZ, Lab, HSL) for pixel buffers of any size",
+  "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -9,6 +10,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "test": "tsc && node --test test",
     "bench": "tsc && node bench/stream-vs-buffer.js"
   },
@@ -24,6 +26,17 @@
   ],
   "license": "MIT",
   "author": "raanderson6",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raanderson6/colorspace-stream.git"
+  },
+  "bugs": {
+    "url": "https://github.com/raanderson6/colorspace-stream/issues"
+  },
+  "homepage": "https://github.com/raanderson6/colorspace-stream#readme",
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "typescript": "^5.4.0"
   }
