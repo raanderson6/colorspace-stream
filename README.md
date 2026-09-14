@@ -18,7 +18,8 @@ pixels' worth of bytes in memory.
 
 No package is published yet. For now, drop `src/` into your project or
 build it locally with `tsc`. There are no runtime dependencies -
-everything is Node's standard library plus plain arithmetic.
+everything is Node's standard library plus plain arithmetic. See
+`CHANGELOG.md` for what's landed so far.
 
 ## Usage
 
