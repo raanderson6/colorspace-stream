@@ -1,11 +1,25 @@
 import { TransformOptions } from 'node:stream';
-import { cmykToRgb, Quad, rgbToCmyk, rgbToHsl, rgbToLab, rgbToYCbCr, Triple, withAlpha } from './conversions';
+import {
+  cmykToRgb,
+  hslToRgb,
+  labToRgb,
+  Quad,
+  rgbToCmyk,
+  rgbToHsl,
+  rgbToLab,
+  rgbToYCbCr,
+  Triple,
+  withAlpha,
+  yCbCrToRgb,
+} from './conversions';
 import {
   cmyk8Reader,
   cmyk8Writer,
   ColorSpaceTransform,
+  hsl8Reader,
   hsl8Writer,
   hsla8Writer,
+  lab8Reader,
   lab8Writer,
   lab32Writer,
   rgb8Reader,
@@ -16,6 +30,7 @@ import {
   rgb32Writer,
   rgba8Reader,
   rgba8Writer,
+  ycbcr8Reader,
   ycbcr8Writer,
 } from './stream';
 
@@ -32,6 +47,16 @@ export function createRgbToHslStream(options?: TransformOptions): ColorSpaceTran
   return new ColorSpaceTransform(rgb8Reader, hsl8Writer, rgbToHsl, options);
 }
 
+/** Packed 8-bit HSL in, packed 8-bit RGB out. */
+export function createHslToRgbStream(options?: TransformOptions): ColorSpaceTransform {
+  return new ColorSpaceTransform(hsl8Reader, rgb8Writer, hslToRgb, options);
+}
+
+/** Packed 8-bit Lab in (see lab8Writer for the scaling used), packed 8-bit RGB out. */
+export function createLabToRgbStream(options?: TransformOptions): ColorSpaceTransform {
+  return new ColorSpaceTransform(lab8Reader, rgb8Writer, labToRgb, options);
+}
+
 /** Passes RGB through unchanged; mainly useful for testing the chunking logic itself. */
 export function createRgbIdentityStream(options?: TransformOptions): ColorSpaceTransform {
   return new ColorSpaceTransform(rgb8Reader, rgb8Writer, (rgb) => rgb, options);
@@ -40,6 +65,11 @@ export function createRgbIdentityStream(options?: TransformOptions): ColorSpaceT
 /** Packed 8-bit RGB in, packed 8-bit YCbCr out (BT.601, full range). */
 export function createRgbToYCbCrStream(options?: TransformOptions): ColorSpaceTransform {
   return new ColorSpaceTransform(rgb8Reader, ycbcr8Writer, rgbToYCbCr, options);
+}
+
+/** Packed 8-bit YCbCr in (BT.601, full range), packed 8-bit RGB out. */
+export function createYCbCrToRgbStream(options?: TransformOptions): ColorSpaceTransform {
+  return new ColorSpaceTransform(ycbcr8Reader, rgb8Writer, yCbCrToRgb, options);
 }
 
 /** Packed 16-bit-per-channel RGB in, packed 8-bit Lab out. */

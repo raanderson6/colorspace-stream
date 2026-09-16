@@ -14,6 +14,9 @@ const {
   createCmykToRgbStream,
   createRgbaIdentityStream,
   createRgbaToHslaStream,
+  createHslToRgbStream,
+  createLabToRgbStream,
+  createYCbCrToRgbStream,
   rgbToLab,
   rgbToHsl,
 } = require('../dist/index.js');
@@ -196,6 +199,65 @@ test('RGB -> CMYK -> RGB round-trips through the streaming codecs', async () => 
 test('CMYK stream raises a flush error for a trailing partial pixel', async () => {
   const truncated = Buffer.from([1, 2, 3, 4, 5, 6]); // one full pixel (4 bytes) plus 2 stray bytes
   await assert.rejects(feed(createCmykToRgbStream(), [truncated]), /trailing 2 byte/);
+});
+
+test('RGB -> HSL -> RGB round-trips through the streaming codecs', async () => {
+  const pixels = Buffer.from([10, 20, 30, 200, 100, 50, 0, 0, 0, 255, 255, 255, 128, 64, 32]);
+  const hsl = await feed(createRgbToHslStream(), [pixels]);
+  const roundTripped = await feed(createHslToRgbStream(), [hsl]);
+  for (let i = 0; i < pixels.length; i++) {
+    assert.ok(Math.abs(roundTripped[i] - pixels[i]) <= 1, `byte ${i}: expected ~${pixels[i]}, got ${roundTripped[i]}`);
+  }
+});
+
+test('HSL to RGB stream output does not depend on chunk boundaries', async () => {
+  const pixels = Buffer.from([10, 20, 30, 200, 100, 50, 0, 0, 0, 255, 255, 255, 128, 64, 32]);
+  const hsl = await feed(createRgbToHslStream(), [pixels]);
+  const whole = await feed(createHslToRgbStream(), [hsl]);
+  for (let size = 1; size < hsl.length; size++) {
+    const chunked = await feed(createHslToRgbStream(), splitEvery(hsl, size));
+    assert.deepEqual(chunked, whole, `chunk size ${size}`);
+  }
+});
+
+test('RGB -> Lab -> RGB round-trips through the streaming codecs', async () => {
+  // 8-bit Lab is lossy the same way 8-bit RGB is, so the round trip is
+  // allowed to differ by a rounding step, not required to be exact.
+  const pixels = Buffer.from([10, 20, 30, 200, 100, 50, 0, 0, 0, 255, 255, 255, 128, 64, 32]);
+  const lab = await feed(createRgbToLabStream(), [pixels]);
+  const roundTripped = await feed(createLabToRgbStream(), [lab]);
+  for (let i = 0; i < pixels.length; i++) {
+    assert.ok(Math.abs(roundTripped[i] - pixels[i]) <= 1, `byte ${i}: expected ~${pixels[i]}, got ${roundTripped[i]}`);
+  }
+});
+
+test('Lab to RGB stream output does not depend on chunk boundaries', async () => {
+  const pixels = Buffer.from([10, 20, 30, 200, 100, 50, 0, 0, 0, 255, 255, 255, 128, 64, 32]);
+  const lab = await feed(createRgbToLabStream(), [pixels]);
+  const whole = await feed(createLabToRgbStream(), [lab]);
+  for (let size = 1; size < lab.length; size++) {
+    const chunked = await feed(createLabToRgbStream(), splitEvery(lab, size));
+    assert.deepEqual(chunked, whole, `chunk size ${size}`);
+  }
+});
+
+test('RGB -> YCbCr -> RGB round-trips through the streaming codecs', async () => {
+  const pixels = Buffer.from([10, 20, 30, 200, 100, 50, 0, 0, 0, 255, 255, 255, 128, 64, 32]);
+  const ycbcr = await feed(createRgbToYCbCrStream(), [pixels]);
+  const roundTripped = await feed(createYCbCrToRgbStream(), [ycbcr]);
+  for (let i = 0; i < pixels.length; i++) {
+    assert.ok(Math.abs(roundTripped[i] - pixels[i]) <= 1, `byte ${i}: expected ~${pixels[i]}, got ${roundTripped[i]}`);
+  }
+});
+
+test('YCbCr to RGB stream output does not depend on chunk boundaries', async () => {
+  const pixels = Buffer.from([10, 20, 30, 200, 100, 50, 0, 0, 0, 255, 255, 255, 128, 64, 32]);
+  const ycbcr = await feed(createRgbToYCbCrStream(), [pixels]);
+  const whole = await feed(createYCbCrToRgbStream(), [ycbcr]);
+  for (let size = 1; size < ycbcr.length; size++) {
+    const chunked = await feed(createYCbCrToRgbStream(), splitEvery(ycbcr, size));
+    assert.deepEqual(chunked, whole, `chunk size ${size}`);
+  }
 });
 
 // Four pixels of 8-bit RGBA, with alpha values that are neither 0 nor 255

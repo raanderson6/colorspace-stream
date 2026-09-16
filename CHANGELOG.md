@@ -38,3 +38,7 @@ yet, so it's all still under 0.1.0.
   whole-buffer pass for elapsed time and peak memory.
 - npm publish metadata in `package.json` (`files`, `repository`, `bugs`,
   `homepage`, `keywords`, `engines`).
+- Reverse-direction 8-bit codecs (`lab8Reader`, `hsl8Reader`, `ycbcr8Reader`)
+  and their stream factories (`createLabToRgbStream`, `createHslToRgbStream`,
+  `createYCbCrToRgbStream`), so Lab, HSL, and YCbCr can be streamed back to
+  RGB the same way CMYK already could.

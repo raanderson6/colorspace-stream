@@ -83,6 +83,14 @@ export const lab8Writer: PixelWriter = {
   },
 };
 
+/** The reader-side counterpart of lab8Writer, undoing the same [0, 255] scaling. */
+export const lab8Reader: PixelReader = {
+  bytesPerPixel: 3,
+  read(buf, offset) {
+    return [(buf[offset]! / 255) * 100, buf[offset + 1]! - 128, buf[offset + 2]! - 128];
+  },
+};
+
 // Big-endian IEEE 754 float32 per channel, unscaled. Twelve bytes per
 // pixel, so the streaming transform's leftover buffer can hold up to 11
 // straddling bytes here. Unlike the fixed-width integer codecs above,
@@ -125,12 +133,26 @@ export const hsl8Writer: PixelWriter = {
   },
 };
 
+export const hsl8Reader: PixelReader = {
+  bytesPerPixel: 3,
+  read(buf, offset) {
+    return [buf[offset]! / 255, buf[offset + 1]! / 255, buf[offset + 2]! / 255];
+  },
+};
+
 export const ycbcr8Writer: PixelWriter = {
   bytesPerPixel: 3,
   write([y, cb, cr], out, offset) {
     out[offset] = clampByte(y * 255);
     out[offset + 1] = clampByte(cb * 255);
     out[offset + 2] = clampByte(cr * 255);
+  },
+};
+
+export const ycbcr8Reader: PixelReader = {
+  bytesPerPixel: 3,
+  read(buf, offset) {
+    return [buf[offset]! / 255, buf[offset + 1]! / 255, buf[offset + 2]! / 255];
   },
 };
 
