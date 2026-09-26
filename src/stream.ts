@@ -212,6 +212,7 @@ export const rgba8Writer: PixelWriter<Quad> = withAlphaWriter(rgb8Writer);
 // while carrying transparency through untouched (see withAlpha in
 // conversions.ts, which pairs with this for the conversion side).
 export const hsla8Writer: PixelWriter<Quad> = withAlphaWriter(hsl8Writer);
+export const hsla8Reader: PixelReader<Quad> = withAlphaReader(hsl8Reader);
 
 /**
  * A Transform stream that converts packed pixel data from one colour space

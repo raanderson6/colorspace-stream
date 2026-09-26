@@ -18,6 +18,7 @@ import {
   ColorSpaceTransform,
   hsl8Reader,
   hsl8Writer,
+  hsla8Reader,
   hsla8Writer,
   lab8Reader,
   lab8Writer,
@@ -110,4 +111,9 @@ export function createRgbaIdentityStream(options?: TransformOptions): ColorSpace
 /** Packed 8-bit RGBA in, packed 8-bit HSL+alpha out - alpha passes through unchanged. */
 export function createRgbaToHslaStream(options?: TransformOptions): ColorSpaceTransform<Quad, Quad> {
   return new ColorSpaceTransform(rgba8Reader, hsla8Writer, withAlpha(rgbToHsl), options);
+}
+
+/** Packed 8-bit HSL+alpha in, packed 8-bit RGBA out - alpha passes through unchanged. */
+export function createHslaToRgbaStream(options?: TransformOptions): ColorSpaceTransform<Quad, Quad> {
+  return new ColorSpaceTransform(hsla8Reader, rgba8Writer, withAlpha(hslToRgb), options);
 }

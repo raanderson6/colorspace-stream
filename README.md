@@ -86,6 +86,8 @@ createReadStream('frame.rgba')
   .pipe(createWriteStream('frame.hsla'));
 ```
 
+`createHslaToRgbaStream` goes the other way, same alpha-passthrough rule.
+
 ## What's here now
 
 - `srgbToLinear` / `linearToSrgb` - gamma correction
@@ -113,8 +115,9 @@ createReadStream('frame.rgba')
 - `withAlpha` - lifts a `Triple -> Triple` conversion into an alpha-preserving
   `Quad -> Quad` one; `withAlphaReader` / `withAlphaWriter` do the same for a
   Triple-based 8-bit reader/writer pair
-- `rgba8Reader`, `rgba8Writer`, `hsla8Writer` - 8-bit codecs with a trailing
-  alpha byte, plus `createRgbaIdentityStream` and `createRgbaToHslaStream`
+- `rgba8Reader`, `rgba8Writer`, `hsla8Writer`, `hsla8Reader` - 8-bit codecs
+  with a trailing alpha byte, plus `createRgbaIdentityStream`,
+  `createRgbaToHslaStream`, and `createHslaToRgbaStream`
 
 ## Testing
 

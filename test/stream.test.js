@@ -14,6 +14,7 @@ const {
   createCmykToRgbStream,
   createRgbaIdentityStream,
   createRgbaToHslaStream,
+  createHslaToRgbaStream,
   createHslToRgbStream,
   createLabToRgbStream,
   createYCbCrToRgbStream,
@@ -300,6 +301,30 @@ test('RGBA to HSLA stream output does not depend on chunk boundaries', async () 
   const whole = await feed(createRgbaToHslaStream(), [FOUR_RGBA_PIXELS]);
   for (let size = 1; size < FOUR_RGBA_PIXELS.length; size++) {
     const chunked = await feed(createRgbaToHslaStream(), splitEvery(FOUR_RGBA_PIXELS, size));
+    assert.deepEqual(chunked, whole, `chunk size ${size}`);
+  }
+});
+
+test('RGBA -> HSLA -> RGBA round-trips through the streaming codecs, alpha exact', async () => {
+  const hsla = await feed(createRgbaToHslaStream(), [FOUR_RGBA_PIXELS]);
+  const roundTripped = await feed(createHslaToRgbaStream(), [hsla]);
+  for (let pixel = 0; pixel < 4; pixel++) {
+    const offset = pixel * 4;
+    for (let channel = 0; channel < 3; channel++) {
+      assert.ok(
+        Math.abs(roundTripped[offset + channel] - FOUR_RGBA_PIXELS[offset + channel]) <= 1,
+        `pixel ${pixel} channel ${channel}`,
+      );
+    }
+    assert.equal(roundTripped[offset + 3], FOUR_RGBA_PIXELS[offset + 3], `pixel ${pixel} alpha`);
+  }
+});
+
+test('HSLA to RGBA stream output does not depend on chunk boundaries', async () => {
+  const hsla = await feed(createRgbaToHslaStream(), [FOUR_RGBA_PIXELS]);
+  const whole = await feed(createHslaToRgbaStream(), [hsla]);
+  for (let size = 1; size < hsla.length; size++) {
+    const chunked = await feed(createHslaToRgbaStream(), splitEvery(hsla, size));
     assert.deepEqual(chunked, whole, `chunk size ${size}`);
   }
 });
