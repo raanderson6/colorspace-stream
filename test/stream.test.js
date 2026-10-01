@@ -10,6 +10,7 @@ const {
   createRgb16IdentityStream,
   createRgb32IdentityStream,
   createRgb32ToLabStream,
+  createLab32ToRgb32Stream,
   createRgbToCmykStream,
   createCmykToRgbStream,
   createRgbaIdentityStream,
@@ -325,6 +326,26 @@ test('HSLA to RGBA stream output does not depend on chunk boundaries', async () 
   const whole = await feed(createHslaToRgbaStream(), [hsla]);
   for (let size = 1; size < hsla.length; size++) {
     const chunked = await feed(createHslaToRgbaStream(), splitEvery(hsla, size));
+    assert.deepEqual(chunked, whole, `chunk size ${size}`);
+  }
+});
+
+test('float32 RGB -> Lab -> RGB round-trips through the streaming codecs', async () => {
+  const lab = await feed(createRgb32ToLabStream(), [TWO_PIXELS_32BIT]);
+  const roundTripped = await feed(createLab32ToRgb32Stream(), [lab]);
+  assert.equal(roundTripped.length, TWO_PIXELS_32BIT.length);
+  for (let i = 0; i < 6; i++) {
+    const expected = TWO_PIXELS_32BIT.readFloatBE(i * 4);
+    const actual = roundTripped.readFloatBE(i * 4);
+    assert.ok(Math.abs(actual - expected) < 1e-3, `value ${i}: expected ~${expected}, got ${actual}`);
+  }
+});
+
+test('float32 Lab to RGB stream output does not depend on chunk boundaries', async () => {
+  const lab = await feed(createRgb32ToLabStream(), [TWO_PIXELS_32BIT]);
+  const whole = await feed(createLab32ToRgb32Stream(), [lab]);
+  for (let size = 1; size < lab.length; size++) {
+    const chunked = await feed(createLab32ToRgb32Stream(), splitEvery(lab, size));
     assert.deepEqual(chunked, whole, `chunk size ${size}`);
   }
 });

@@ -22,6 +22,7 @@ import {
   hsla8Writer,
   lab8Reader,
   lab8Writer,
+  lab32Reader,
   lab32Writer,
   rgb8Reader,
   rgb8Writer,
@@ -86,6 +87,11 @@ export function createRgb16IdentityStream(options?: TransformOptions): ColorSpac
 /** Packed float32-per-channel RGB in, full-precision float32 Lab out - no quantisation either side. */
 export function createRgb32ToLabStream(options?: TransformOptions): ColorSpaceTransform {
   return new ColorSpaceTransform(rgb32Reader, lab32Writer, rgbToLab, options);
+}
+
+/** Packed float32 Lab in, packed float32-per-channel RGB out - the reverse of createRgb32ToLabStream. */
+export function createLab32ToRgb32Stream(options?: TransformOptions): ColorSpaceTransform {
+  return new ColorSpaceTransform(lab32Reader, rgb32Writer, labToRgb, options);
 }
 
 /** Packed float32-per-channel RGB in and out, mainly useful for testing the chunking logic itself. */

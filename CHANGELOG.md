@@ -44,3 +44,5 @@ yet, so it's all still under 0.1.0.
   RGB the same way CMYK already could.
 - `hsla8Reader` and `createHslaToRgbaStream`, completing the alpha-aware HSL
   round trip alongside the existing `createRgbaToHslaStream`.
+- `lab32Reader` and `createLab32ToRgb32Stream`, so the float32 RGB -> Lab
+  stream can be reversed without the precision loss of the 8-bit Lab codec.

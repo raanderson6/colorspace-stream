@@ -109,9 +109,10 @@ createReadStream('frame.rgba')
 - `rgb16Reader`, `rgb16Writer` - big-endian 16-bit-per-channel RGB (the
   layout used by 16-bit PNG and TIFF samples), plus
   `createRgb16ToLabStream` and `createRgb16IdentityStream`
-- `rgb32Reader`, `rgb32Writer`, `lab32Writer` - big-endian float32-per-channel
-  codecs, unscaled and unclamped, for lossless round trips, plus
-  `createRgb32ToLabStream` and `createRgb32IdentityStream`
+- `rgb32Reader`, `rgb32Writer`, `lab32Reader`, `lab32Writer` - big-endian
+  float32-per-channel codecs, unscaled and unclamped, for lossless round
+  trips, plus `createRgb32ToLabStream`, `createLab32ToRgb32Stream`, and
+  `createRgb32IdentityStream`
 - `withAlpha` - lifts a `Triple -> Triple` conversion into an alpha-preserving
   `Quad -> Quad` one; `withAlphaReader` / `withAlphaWriter` do the same for a
   Triple-based 8-bit reader/writer pair

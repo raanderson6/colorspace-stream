@@ -124,6 +124,14 @@ export const lab32Writer: PixelWriter = {
   },
 };
 
+/** The reader-side counterpart of lab32Writer. */
+export const lab32Reader: PixelReader = {
+  bytesPerPixel: 12,
+  read(buf, offset) {
+    return [buf.readFloatBE(offset), buf.readFloatBE(offset + 4), buf.readFloatBE(offset + 8)];
+  },
+};
+
 export const hsl8Writer: PixelWriter = {
   bytesPerPixel: 3,
   write([h, s, l], out, offset) {
